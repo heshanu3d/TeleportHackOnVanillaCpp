@@ -12,6 +12,8 @@ cmake --build build/debug --target all
 ```
 
 ## 2
+set env first time build or build directory is deleted
+double click scripts/env.bat
 double click scripts/build.bat
 
 # clean

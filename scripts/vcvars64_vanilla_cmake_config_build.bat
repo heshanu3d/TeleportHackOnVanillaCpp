@@ -3,4 +3,4 @@
 @call "%~dp0vcvarsall.bat" x64 %*
 cd ../build/debug
 cmake ../.. --preset debug
-ninja -j 8
+ninja -j 8 && ninja install
