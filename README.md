@@ -1,4 +1,5 @@
 # build
+## 1
 set visual cmdline env first
 ```
 open a cmd and input this to set env
@@ -10,10 +11,17 @@ cmake --preset debug
 cmake --build build/debug --target all
 ```
 
+## 2
+double click scripts/build.bat
+
 # clean
+## 1
 ```
 cmake --build build/debug --target clean
 ```
+
+## 2
+double click scripts/clean.bat
 
 # install
 ```
