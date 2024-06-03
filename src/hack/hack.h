@@ -16,10 +16,12 @@ public:
     Env(std::wstring windowName);
     ~Env();
     void Load();
+    void Reload();
     std::vector<std::shared_ptr<Instance>> Instances() {
         return m_instances;
     }
 private:
+    bool Privilege(HANDLE *hToken);
     DWORD m_pid;
     std::vector<HANDLE> m_handles;
     std::vector<std::shared_ptr<Instance>> m_instances;
@@ -38,6 +40,3 @@ private:
     DWORD64 m_baseAddr;
     std::wstring m_windowName;
 };
-
-bool Privilege();
-

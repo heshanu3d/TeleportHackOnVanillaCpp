@@ -85,7 +85,7 @@ static bool EnablePrivilege(HANDLE hToken, LPCTSTR lpszPrivilege, BOOL bEnablePr
     return true;
 }
 
-bool Privilege(HANDLE *hToken)
+bool Env::Privilege(HANDLE *hToken)
 {
     // 打开当前进程的令牌
     if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, hToken)) {
@@ -129,8 +129,7 @@ BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) {
 
 Env::Env(DWORD pid) : m_pid(pid)
 {
-    std::vector<HANDLE> m_handles;
-    HANDLE processHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+    HANDLE processHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, m_pid);
     if (processHandle == NULL) {
         std::cerr << "OpenProcess error: " << GetLastError() << std::endl;
         return;
@@ -157,6 +156,9 @@ Env::Env(std::wstring windowName) : m_windowName(windowName)
 
 Env::~Env()
 {
+    for (auto handle : m_handles) {
+        CloseHandle(handle);
+    }
     CloseHandle(m_hToken);
     std::cout << "Env::~Env()" << std::endl;
 }
@@ -171,9 +173,35 @@ void Env::Load()
         exit(-1);
     }
     for (auto handle : m_handles) {
-        // m_instances.emplace_back(handle, m_windowName);
         m_instances.emplace_back(std::make_shared<Instance>(handle, m_windowName));
-        // auto instance = std::make_shared<Instance>(handle)
+    }
+}
+
+void Env::Reload()
+{
+    m_instances.clear();
+
+    for (auto handle : m_handles) {
+        CloseHandle(handle);
+    }
+
+    if (m_windowName.size() == 0) {
+        m_handles.clear();
+        HANDLE processHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, m_pid);
+        if (processHandle == NULL) {
+            std::cerr << "OpenProcess error: " << GetLastError() << std::endl;
+            return;
+        }
+        m_handles.push_back(processHandle);
+    } else {
+        EnumWindowParam param;
+        param.windowName = m_windowName;
+        EnumWindows(EnumWindowsProc, (LPARAM)&param);
+        m_handles = param.handles;
+    }
+
+    for (auto handle : m_handles) {
+        m_instances.emplace_back(std::make_shared<Instance>(handle, m_windowName));
     }
 }
 
