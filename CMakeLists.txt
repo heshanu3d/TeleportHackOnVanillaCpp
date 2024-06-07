@@ -13,3 +13,4 @@ add_subdirectory(test)
 add_subdirectory(third)
 
 install(DIRECTORY res/fonts DESTINATION bin FILES_MATCHING PATTERN "*.ttf")
+install(DIRECTORY res/configs DESTINATION bin FILES_MATCHING PATTERN "*.fav")

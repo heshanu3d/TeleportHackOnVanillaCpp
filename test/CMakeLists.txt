@@ -11,8 +11,11 @@ target_link_libraries(imgui_dx9_demo PRIVATE
         d3d9.lib
 )
 
+add_executable(test_teleport_list_parser test_teleport_list_parser.cpp)
+target_link_libraries(test_teleport_list_parser PRIVATE config_parser)
 
-install(TARGETS target demo imgui_dx9_demo
+
+install(TARGETS target demo imgui_dx9_demo test_teleport_list_parser
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION bin
         ARCHIVE DESTINATION lib)

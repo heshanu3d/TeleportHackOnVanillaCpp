@@ -138,9 +138,9 @@ int main(int, char**)
         auto pos = path_s.find_last_of("\\");
         if (pos != std::string::npos) {
             path_s.erase(pos);
-        path_s += "\\fonts\\ZhanKuWenYiTi-2.ttf";
-        std::cout << "font file path: " << path_s << std::endl;
-        ImFont* font = io.Fonts->AddFontFromFileTTF(path_s.c_str(), 18.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
+            path_s += "\\fonts\\ZhanKuWenYiTi-2.ttf";
+            std::cout << "font file path: " << path_s << std::endl;
+            ImFont* font = io.Fonts->AddFontFromFileTTF(path_s.c_str(), 18.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
         } else {
             std::cerr << "font file path is error" << path_s << std::endl;
         }
