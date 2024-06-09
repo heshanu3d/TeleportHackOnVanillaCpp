@@ -1,5 +1,6 @@
 add_subdirectory(hack)
 add_subdirectory(config_parser)
+add_subdirectory(utils)
 
 add_executable(TeleportHackOnVanilla main.cpp)
 

@@ -18,6 +18,8 @@
 #include <functional>
 #include <map>
 
+#include "teleport_list_parser.h"
+
 using namespace std;
 
 // Data
@@ -48,31 +50,72 @@ void add_select_node(std::string txt, std::function<void(string)> doubleClickCal
     }
 }
 
-void AnotherWindow(bool &show_another_window)
+void add_tree_node(shared_ptr<Category> category)
+{
+    if (category->point && category->depth > 1)
+        add_select_node(category->point->ToString().c_str());
+}
+
+void show_teleport_list_by_rootCategory(shared_ptr<Category> category)
+{
+    string list_name = "Teleport List --------" + category->name + "--------";
+    if (ImGui::TreeNode(list_name.c_str())) {
+        if (ImGui::TreeNode("More")) {
+            for (auto &[k, v] : category->categories) {
+                if (v->depth == 1 && v->point)
+                    add_select_node(v->point->ToString().c_str());
+            }
+            ImGui::TreePop();
+        }        
+        for (auto &[k, v] : category->categories) {
+            if (ImGui::TreeNode(v->name.c_str())) {
+                v->Traverse(add_tree_node);
+                ImGui::TreePop();
+            }
+        }
+        ImGui::TreePop();
+    }
+}
+
+void AnotherWindow(bool &show_another_window, vector<shared_ptr<Category>> &lists)
 {
     static float f = 0.0f;
     // ImGui::SetNextWindowSize(ImVec2(800, 600));
     ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
     ImGui::Text("Hello from another window!");
     ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-    ImGui::SetNextItemOpen(true);
 
-#define DTreeNode
-#ifdef DTreeNode
-    if (ImGui::TreeNode("TreeNode")) {
-#else
-    if (ImGui::CollapsingHeader("TreeNode")) {
-#endif
-        if (ImGui::Selectable("4. I am double clickable", false, ImGuiSelectableFlags_AllowDoubleClick))
-            if (ImGui::IsMouseDoubleClicked(0))
-                std::cout << "double click" << std::endl;
-        for (int i = 0; i < 5; i++)
-            add_select_node("select node " + to_string(i));
-        ImGui::Text("123");
-#ifdef DTreeNode
-        ImGui::TreePop();
-#endif
+    // ImGui::SetNextItemOpen(true);
+
+    // if (ImGui::BeginTabBar("MyTabBar", tab_bar_flags))
+    // {
+    //     for (int n = 0; n < IM_ARRAYSIZE(opened); n++)
+    //         if (opened[n] && ImGui::BeginTabItem(names[n], &opened[n], ImGuiTabItemFlags_None))
+    //         {
+    //             ImGui::Text("This is the %s tab!", names[n]);
+    //             if (n & 1)
+    //                 ImGui::Text("I am an odd tab.");
+    //             ImGui::EndTabItem();
+    //         }
+    //     ImGui::EndTabBar();
+    // }
+
+    for (auto category : lists) {
+        show_teleport_list_by_rootCategory(category);
     }
+    // if (ImGui::TreeNode("TreeNode")) {
+    //     //  tab list view
+    //     for (auto category : lists) {
+            
+    //         for (auto &[k, v] : category->categories) {
+    //             if (ImGui::TreeNode(v->name.c_str())) {
+    //                 v->Traverse(add_tree_node);
+    //                 ImGui::TreePop();
+    //             }
+    //         }
+    //     }
+    //     ImGui::TreePop();
+    // }
     if (ImGui::Button("Close Me"))
         show_another_window = false;
 
@@ -153,6 +196,10 @@ int main(int, char**)
     bool show_another_window = true;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
+    auto parser = new TeleportListParser();
+    parser->Init();
+    vector<shared_ptr<Category>> lists = parser->Lists();
+
     // Main loop
     bool done = false;
     while (!done)
@@ -230,7 +277,7 @@ int main(int, char**)
         // 3. Show another simple window.
         if (show_another_window)
         {
-            AnotherWindow(show_another_window);
+            AnotherWindow(show_another_window, lists);
         }
 
         // Rendering

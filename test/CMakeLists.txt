@@ -9,6 +9,7 @@ add_executable(imgui_dx9_demo
 target_link_libraries(imgui_dx9_demo PRIVATE
         imgui_d3dx_base_obj
         d3d9.lib
+        config_parser
 )
 
 add_executable(test_teleport_list_parser test_teleport_list_parser.cpp)

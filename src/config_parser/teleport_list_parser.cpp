@@ -1,72 +1,59 @@
 #include "teleport_list_parser.h"
 #include <fstream>
-#include <regex>
 #include <stack>
-#include <windows.h>
+#include <regex>
+
+#include "utils.h"
 
 using namespace std;
+using namespace _utils_;
 
-void traverseDirectory(const std::string& directory, std::vector<std::string>& files)
+void Category::Traverse(std::function<void(shared_ptr<Category>)> action)
 {
-    std::string searchPath = directory + "\\*";
-    WIN32_FIND_DATA findData;
-    HANDLE hFind = FindFirstFile(searchPath.c_str(), &findData);
+    stack<shared_ptr<Category>> sta;
+    sta.push(shared_from_this());
 
-    if (hFind != INVALID_HANDLE_VALUE) {
-        do {
-            if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-                if (strcmp(findData.cFileName, ".") != 0 && strcmp(findData.cFileName, "..") != 0) {
-                    std::string subDirectory = directory + "\\" + findData.cFileName;
-                    traverseDirectory(subDirectory, files);
-                }
-            } else {
-                std::string filePath = directory + "\\" + findData.cFileName;
-                files.push_back(filePath);
-            }
-        } while (FindNextFile(hFind, &findData));
+    while (!sta.empty()) {
+        auto node = sta.top();
+        sta.pop();
 
-        FindClose(hFind);
+        action(node);
+
+        for (auto &[k, v] : node->categories) {
+            sta.push(v);
+        }
     }
 }
 
-string GetCurrentBinaryPath()
-{
-    char path[MAX_PATH] = {0};
-    if (GetModuleFileNameA(NULL, path, MAX_PATH)) {
-        return string(path);
-    } else {
-        std::cerr << "get file path failed" << std::endl;
-        return "";
-    }
-}
 
-string GetCurrentBinaryDirectoryPath()
-{
-    auto path = GetCurrentBinaryPath();
-    auto pos = path.find_last_of("\\");
-    if (pos != std::string::npos) {
-        path.erase(pos + 1);
-        return path;
-    }
 
-    std::cerr << "font file path is error" << path << std::endl;
-    return "";
-}
+// void Category::Traverse(std::function<void(shared_ptr<Category>)> action = [](shared_ptr<Category> node){ node->Print(); })
+// {
+//     stack<shared_ptr<Category>> sta;
+//     sta.push(shared_from_this());
 
-std::vector<std::string> split(const std::string str, const std::string regex_str)
-{
-    std::regex regexz(regex_str);
-    std::vector<std::string> list(std::sregex_token_iterator(str.begin(), str.end(), regexz, -1),
-                                  std::sregex_token_iterator());
-    return list;
-}
+//     while (!sta.empty()) {
+//         auto node = sta.top();
+//         sta.pop();
 
-shared_ptr<Category> TeleportListParser::Parse(const string &configFilePath)
+//         action(node);
+
+//         for (auto &[k, v] : node->categories) {
+//             sta.push(v);
+//         }
+//     }
+// }
+
+shared_ptr<Category> TeleportListParser::Parse(const std::string &configFilePath)
 {
     string line;
     fstream fs(configFilePath, ios::in);
     std::regex pattern("-*\\d*\\.\\d*");
-    auto rootCategory = make_shared<Category>();
+    auto fileName = configFilePath;
+    auto pos = fileName.find_last_of("\\");
+    if (pos != string::npos)
+        fileName.erase(0, pos + 1);
+    auto rootCategory = make_shared<Category>(fileName == configFilePath ? "" : fileName);
 
     shared_ptr<Category> root;
     string name;
@@ -87,7 +74,7 @@ shared_ptr<Category> TeleportListParser::Parse(const string &configFilePath)
             
             for (auto r : res) {
                 if (!root->categories.count(r)) {
-                    root->categories[r] = make_shared<Category>();
+                    root->categories[r] = make_shared<Category>(r, root->depth);
                 }
                 root = root->categories[r];
             }
@@ -99,37 +86,25 @@ shared_ptr<Category> TeleportListParser::Parse(const string &configFilePath)
     }
 
     cout << "[" << configFilePath << "] start traverse root node" << endl;
-    std::stack<shared_ptr<Category>> sta;
 
-    // if (rootCategory->categories.count("MC"))
+    // if (rootCategory->categories.count("MC")) {
     //     root = rootCategory->categories["MC"];
-    // sta.push(root);
-    sta.push(rootCategory);
-
-    while (!sta.empty()) {
-        auto node = sta.top();
-        sta.pop();
-
-        if (node->point)
-            node->point->Print();
-
-        // for (auto it = node->categories.begin(); it != node->categories.end(); it++) {
-        //     sta.push(it->second);
-        for (auto &[k, v] : node->categories) {
-            sta.push(v);
-        }
-    }
+    //     root->Traverse();
+    // }
+#ifdef DEBUG
+    rootCategory->Traverse();
+#endif
 
     return rootCategory;
 }
 
 void TeleportListParser::Init()
 {
-    traverseDirectory(GetCurrentBinaryDirectoryPath() + config_dir, m_configPaths);
+    _utils_::TraverseDirectory(GetCurrentBinaryDirectoryPath() + config_dir, m_configPaths);
 
     for (const std::string& configPath : m_configPaths) {
         // std::cout << configPath << std::endl;
-        Parse(configPath);
+        m_root.push_back(Parse(configPath));
     }
 }
 
