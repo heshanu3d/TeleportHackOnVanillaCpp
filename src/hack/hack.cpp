@@ -87,16 +87,16 @@ static bool EnablePrivilege(HANDLE hToken, LPCTSTR lpszPrivilege, BOOL bEnablePr
 
 bool Env::Privilege(HANDLE *hToken)
 {
-    // ´ò¿ªµ±Ç°½ø³ÌµÄÁîÅÆ
+    // æ‰“å¼€å½“å‰è¿›ç¨‹çš„ä»¤ç‰Œ
     if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, hToken)) {
         std::cerr << "OpenProcessToken error: " << GetLastError() << std::endl;
         return false;
     }
 
-    // ÆôÓÃSeDebugPrivilegeÈ¨ÏŞ
+    // å¯ç”¨SeDebugPrivilegeæƒé™
     if (!EnablePrivilege(*hToken, SE_DEBUG_NAME, TRUE)) {
         CloseHandle(*hToken);
-        std::cerr << "ÌáÈ¨Ê§°Ü" << std::endl;
+        std::cerr << "Enable Privilege Failed" << std::endl;
         return false;
     }
 
@@ -124,7 +124,7 @@ BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) {
             param->handles.push_back(hProcess);
         }
     }
-    return TRUE; // ¼ÌĞøÃ¶¾Ù´°¿Ú
+    return TRUE;
 }
 
 Env::Env(DWORD pid) : m_pid(pid)
@@ -232,12 +232,11 @@ bool Instance::ReadMemory(uint64_t offset, uint8_t *buffer, size_t buffer_size,s
     BOOL rpmResult = ReadProcessMemory(m_handle, (LPVOID)(m_baseAddr + offset), buffer, buffer_size, &readBytes);
 
     if (rpmResult == FALSE) {
-        std::cerr << "¶ÁÈ¡ÄÚ´æÊ§°Ü£¬´íÎó´úÂë: " << GetLastError() << std::endl;
+        std::cerr << "ReadProcessMemory error: " << GetLastError() << std::endl;
         return false;
     }
 
-    std::cout << "¶ÁÈ¡ÄÚ´æ³É¹¦£¬¹²¶ÁÈ¡ " << readBytes << " ×Ö½ÚÊı¾İ¡£" << std::endl;
-    // ÔÚÕâÀï×öÄãĞèÒª×öµÄ´¦Àí£¬±ÈÈçÊä³ö¶ÁÈ¡µÄÊı¾İ
+    std::cout << "ReadProcessMemory success, read bytes " << readBytes << std::endl;
     for (SIZE_T i = 0; i < readBytes; ++i) {
         std::cout << std::hex << static_cast<uint16_t>(buffer[i]) << " ";
     }

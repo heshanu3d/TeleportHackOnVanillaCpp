@@ -1,6 +1,10 @@
 #include "hack.h"
+#include "ui.h"
 
 #include <iostream>
+#include <thread>
+
+using namespace std;
 
 DWORD64 print_func_offset = 0x159A;
 DWORD64 g_cnt_offset = 0xE170;
@@ -20,6 +24,10 @@ int main()
     for (auto & instance : env.Instances()) {
         MemoryProcess(instance);
     }
+
+    thread uiThread(ui_main);
+    uiThread.detach();
+
     while (1) {
         getchar();
         env.Reload();
