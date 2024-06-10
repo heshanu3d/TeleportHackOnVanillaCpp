@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include <iostream>
+#include <sstream>
 #include <iomanip>
 #include <functional>
 
@@ -28,8 +29,21 @@ struct Point {
     float y;
     float z;
     std::string name;
-    std::string ToString() { return name + ", " + std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z); }
-    std::string ToStringWithoutName() { return std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z); }
+    std::string ToString() {
+        std::stringstream ss;
+        ss << name << ",  "
+           << std::fixed << std::setprecision(1) << x << ",  "
+           << std::fixed << std::setprecision(1) << y << ",  "
+           << std::fixed << std::setprecision(1) << z;
+           return ss.str();
+    }
+    std::string ToStringWithoutName() {
+        std::stringstream ss;
+        ss << std::fixed << std::setprecision(1) << x << ",  "
+           << std::fixed << std::setprecision(1) << y << ",  "
+           << std::fixed << std::setprecision(1) << z;
+           return ss.str();
+    }
     void Print() {
         std::cout << std::setw(10) << std::left << std::left << x    << ","
                   << std::setw(10) << std::left << std::left << y    << ","

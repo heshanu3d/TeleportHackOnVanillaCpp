@@ -36,24 +36,32 @@ void ResetDevice();
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 string g_select_node_txt;
+shared_ptr<Category> g_select_category = nullptr;
 
-void add_select_node(std::string txt, std::function<void(string)> doubleClickCallback = [](string s){std::cout << "double click " << s << std::endl;},
+void add_select_node(std::string txt, shared_ptr<Category> category, std::function<void(string)> doubleClickCallback = [](string s){std::cout << "double click " << s << std::endl;},
     std::function<void(string)> singleClickCallback = [](string s){std::cout << "single click " << s << std::endl;})
 {
-    if (ImGui::Selectable(txt.c_str(), false, ImGuiSelectableFlags_AllowDoubleClick)) {
+    if (ImGui::Selectable(txt.c_str(), g_select_node_txt == txt, ImGuiSelectableFlags_AllowDoubleClick)) {
         if (ImGui::IsMouseDoubleClicked(0))
             doubleClickCallback(txt);
         else {
             singleClickCallback(txt);
             g_select_node_txt = txt;
+            g_select_category = category;
         }
     }
+}
+
+void add_button(std::string txt, function<void()> action, const ImVec2& size = ImVec2(0, 0))
+{
+    if (ImGui::Button(txt.c_str(), size))
+        action();
 }
 
 void add_tree_node(shared_ptr<Category> category)
 {
     if (category->point && category->depth > 1)
-        add_select_node(category->point->ToString().c_str());
+        add_select_node(category->point->ToString().c_str(), category);
 }
 
 void show_teleport_list_by_rootCategory(shared_ptr<Category> category)
@@ -63,7 +71,7 @@ void show_teleport_list_by_rootCategory(shared_ptr<Category> category)
         if (ImGui::TreeNode("More")) {
             for (auto &[k, v] : category->categories) {
                 if (v->depth == 1 && v->point)
-                    add_select_node(v->point->ToString().c_str());
+                    add_select_node(v->point->ToString().c_str(), v);
             }
             ImGui::TreePop();
         }        
@@ -81,43 +89,37 @@ void AnotherWindow(bool &show_another_window, vector<shared_ptr<Category>> &list
 {
     static float f = 0.0f;
     // ImGui::SetNextWindowSize(ImVec2(800, 600));
-    ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-    ImGui::Text("Hello from another window!");
-    ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+    ImGui::Begin("Another Window", &show_another_window);
 
     // ImGui::SetNextItemOpen(true);
 
-    // if (ImGui::BeginTabBar("MyTabBar", tab_bar_flags))
-    // {
-    //     for (int n = 0; n < IM_ARRAYSIZE(opened); n++)
-    //         if (opened[n] && ImGui::BeginTabItem(names[n], &opened[n], ImGuiTabItemFlags_None))
-    //         {
-    //             ImGui::Text("This is the %s tab!", names[n]);
-    //             if (n & 1)
-    //                 ImGui::Text("I am an odd tab.");
-    //             ImGui::EndTabItem();
-    //         }
-    //     ImGui::EndTabBar();
-    // }
+    if (ImGui::BeginTabBar("MyTabBar")) {
+        if (ImGui::BeginTabItem("Teleport")) {
+            ImGui::BeginChild("ChildL", ImVec2(ImGui::GetContentRegionAvail().x * 0.6f, ImGui::GetContentRegionAvail().y), ImGuiChildFlags_None);
+                for (auto category : lists) {
+                    show_teleport_list_by_rootCategory(category);
+                }
+            ImGui::EndChild();
 
-    for (auto category : lists) {
-        show_teleport_list_by_rootCategory(category);
+            ImGui::SameLine();
+
+            ImGui::BeginChild("ChildR", ImVec2(0, ImGui::GetContentRegionAvail().y), ImGuiChildFlags_None);
+
+
+            add_button("Add", [](){  });
+            ImGui::SameLine();
+            add_button("Edit", [](){  });
+            ImGui::SameLine();
+            add_button("Delete", [](){  });
+            ImGui::SameLine();
+            add_button("Teleport", [](){ if (g_select_category) g_select_category->Print(); }, ImVec2(120, 50));
+
+            ImGui::EndChild();
+
+            ImGui::EndTabItem();
+        }
+        ImGui::EndTabBar();
     }
-    // if (ImGui::TreeNode("TreeNode")) {
-    //     //  tab list view
-    //     for (auto category : lists) {
-            
-    //         for (auto &[k, v] : category->categories) {
-    //             if (ImGui::TreeNode(v->name.c_str())) {
-    //                 v->Traverse(add_tree_node);
-    //                 ImGui::TreePop();
-    //             }
-    //         }
-    //     }
-    //     ImGui::TreePop();
-    // }
-    if (ImGui::Button("Close Me"))
-        show_another_window = false;
 
     ImGui::End();
 }
@@ -183,7 +185,7 @@ int main(int, char**)
             path_s.erase(pos);
             path_s += "\\fonts\\ZhanKuWenYiTi-2.ttf";
             std::cout << "font file path: " << path_s << std::endl;
-            ImFont* font = io.Fonts->AddFontFromFileTTF(path_s.c_str(), 18.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
+            ImFont* font = io.Fonts->AddFontFromFileTTF(path_s.c_str(), 14.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
         } else {
             std::cerr << "font file path is error" << path_s << std::endl;
         }
