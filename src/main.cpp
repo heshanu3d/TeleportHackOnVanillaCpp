@@ -6,9 +6,14 @@
 
 using namespace std;
 
+#ifdef DEBUG
 DWORD64 print_func_offset = 0x159A;
 DWORD64 g_cnt_offset = 0xE170;
-
+#else
+DWORD64 print_func_offset = 0x159A;
+DWORD64 g_cnt_offset = 0x4040;
+#endif
+// 36 2 0 0 8b c3 eb
 void MemoryProcess(std::shared_ptr<Instance> ins)
 {
     uint8_t buffer[7] = { 0 };
@@ -29,10 +34,15 @@ int main()
     uiThread.detach();
 
     while (1) {
-        getchar();
-        env.Reload();
-        for (auto & instance : env.Instances()) {
-            MemoryProcess(instance);
+        string line;
+        getline(cin, line);
+        if (line == "print") {
+            cout << line << endl;
+        } else {
+            env.Reload();
+            for (auto & instance : env.Instances()) {
+                MemoryProcess(instance);
+            }
         }
     }
     return 0;

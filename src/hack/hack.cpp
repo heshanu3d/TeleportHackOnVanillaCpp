@@ -113,7 +113,6 @@ BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) {
 #else
     std::wstring windowTitleStr = std::wstring(windowTitle, windowTitle + _tcslen(windowTitle));
 #endif
-
     // if (windowTitleStr == param->windowName) {
     if (windowTitleStr.find(param->windowName) != std::wstring::npos) {
         std::wcout << windowTitleStr << std::endl;
