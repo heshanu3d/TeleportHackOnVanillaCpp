@@ -44,6 +44,9 @@ struct Point {
            << std::fixed << std::setprecision(1) << z;
            return ss.str();
     }
+    std::string ToStringWithoutXYZ() {
+        return name;
+    }
     void Print() {
         std::cout << std::setw(10) << std::left << std::left << x    << ","
                   << std::setw(10) << std::left << std::left << y    << ","

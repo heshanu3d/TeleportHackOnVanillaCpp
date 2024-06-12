@@ -38,7 +38,9 @@ void ResetDevice();
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 string g_select_node_txt;
+char g_teleport_name[256];
 shared_ptr<Category> g_select_category = nullptr;
+bool g_sync = false;
 
 void add_select_node(std::string txt, shared_ptr<Category> category, std::function<void(string)> doubleClickCallback = [](string s){std::cout << "double click " << s << std::endl;},
     std::function<void(string)> singleClickCallback = [](string s){std::cout << "single click " << s << std::endl;})
@@ -48,6 +50,8 @@ void add_select_node(std::string txt, shared_ptr<Category> category, std::functi
             doubleClickCallback(txt);
         else {
             singleClickCallback(txt);
+            if (category->point)
+                strcpy(g_teleport_name, category->point->ToStringWithoutXYZ().c_str());
             g_select_node_txt = txt;
             g_select_category = category;
         }
@@ -97,26 +101,43 @@ void AnotherWindow(bool &show_another_window, vector<shared_ptr<Category>> &list
 
     if (ImGui::BeginTabBar("MyTabBar")) {
         if (ImGui::BeginTabItem("Teleport")) {
-            ImGui::BeginChild("ChildL", ImVec2(ImGui::GetContentRegionAvail().x * 0.6f, ImGui::GetContentRegionAvail().y), ImGuiChildFlags_None);
+            ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
+            ImGui::BeginChild("ChildL", ImVec2(ImGui::GetContentRegionAvail().x * 0.6f, ImGui::GetContentRegionAvail().y), ImGuiChildFlags_Border);
                 for (auto category : lists) {
                     show_teleport_list_by_rootCategory(category);
                 }
             ImGui::EndChild();
+            ImGui::PopStyleVar();
 
             ImGui::SameLine();
 
-            ImGui::BeginChild("ChildR", ImVec2(0, ImGui::GetContentRegionAvail().y), ImGuiChildFlags_None);
+            ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
+            ImGui::BeginChild("ChildR", ImVec2(0, ImGui::GetContentRegionAvail().y), ImGuiChildFlags_Border);
 
-
-            add_button("Add", [](){  });
+            // line 0
+            static ImGuiInputTextFlags flags = ImGuiInputTextFlags_EscapeClearsAll;
+            ImGui::InputText("", g_teleport_name, IM_ARRAYSIZE(g_teleport_name), flags);
+            // line 1
+            add_button("Add", [](){}, ImVec2(50, 20));
             ImGui::SameLine();
-            add_button("Edit", [](){  });
+            add_button("Edit", [](){}, ImVec2(50, 20));
             ImGui::SameLine();
-            add_button("Delete", [](){  });
+            add_button("Delete", [](){}, ImVec2(50, 20));
             ImGui::SameLine();
-            add_button("Teleport", [](){ if (g_select_category) g_select_category->Print(); }, ImVec2(120, 50));
+            ImGui::Checkbox("Sync", &g_sync);
+            // line 2
+            add_button("Teleport", [](){
+                if (g_select_category) {
+                    g_select_category->Print();
+                    if (g_select_category->point)
+                        strcpy(g_teleport_name, g_select_category->point->ToStringWithoutXYZ().c_str());
+                }
+            }, ImVec2(120, 50));
+            // line 3
+            add_button("Save", [](){}, ImVec2(50, 20));
 
             ImGui::EndChild();
+            ImGui::PopStyleVar();
 
             ImGui::EndTabItem();
         }
