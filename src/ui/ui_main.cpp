@@ -14,12 +14,6 @@
 #include <d3d9.h>
 #include <tchar.h>
 
-#include <windows.h>
-#include <iostream>
-#include <string>
-#include <functional>
-#include <map>
-
 #include "teleport_list_parser.h"
 
 using namespace std;
@@ -36,116 +30,6 @@ bool CreateDeviceD3D(HWND hWnd);
 void CleanupDeviceD3D();
 void ResetDevice();
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
-string g_select_node_txt;
-char g_teleport_name[256];
-shared_ptr<Category> g_select_category = nullptr;
-bool g_sync = false;
-
-void add_select_node(std::string txt, shared_ptr<Category> category, std::function<void(string)> doubleClickCallback = [](string s){std::cout << "double click " << s << std::endl;},
-    std::function<void(string)> singleClickCallback = [](string s){std::cout << "single click " << s << std::endl;})
-{
-    if (ImGui::Selectable(txt.c_str(), g_select_node_txt == txt, ImGuiSelectableFlags_AllowDoubleClick)) {
-        if (ImGui::IsMouseDoubleClicked(0))
-            doubleClickCallback(txt);
-        else {
-            singleClickCallback(txt);
-            if (category->point)
-                strcpy(g_teleport_name, category->point->ToStringWithoutXYZ().c_str());
-            g_select_node_txt = txt;
-            g_select_category = category;
-        }
-    }
-}
-
-void add_button(std::string txt, function<void()> action, const ImVec2& size = ImVec2(0, 0))
-{
-    if (ImGui::Button(txt.c_str(), size))
-        action();
-}
-
-void add_tree_node(shared_ptr<Category> category)
-{
-    if (category->point && category->depth > 1)
-        add_select_node(category->point->ToString().c_str(), category);
-}
-
-void show_teleport_list_by_rootCategory(shared_ptr<Category> category)
-{
-    string list_name = "Teleport List --------" + category->name + "--------";
-    if (ImGui::TreeNode(list_name.c_str())) {
-        if (ImGui::TreeNode("More")) {
-            for (auto &[k, v] : category->categories) {
-                if (v->depth == 1 && v->point)
-                    add_select_node(v->point->ToString().c_str(), v);
-            }
-            ImGui::TreePop();
-        }        
-        for (auto &[k, v] : category->categories) {
-            if (ImGui::TreeNode(v->name.c_str())) {
-                v->Traverse(add_tree_node);
-                ImGui::TreePop();
-            }
-        }
-        ImGui::TreePop();
-    }
-}
-
-void AnotherWindow(bool &show_another_window, vector<shared_ptr<Category>> &lists)
-{
-    static float f = 0.0f;
-    // ImGui::SetNextWindowSize(ImVec2(800, 600));
-    ImGui::Begin("Another Window", &show_another_window);
-
-    // ImGui::SetNextItemOpen(true);
-
-    if (ImGui::BeginTabBar("MyTabBar")) {
-        if (ImGui::BeginTabItem("Teleport")) {
-            ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
-            ImGui::BeginChild("ChildL", ImVec2(ImGui::GetContentRegionAvail().x * 0.6f, ImGui::GetContentRegionAvail().y), ImGuiChildFlags_Border);
-                for (auto category : lists) {
-                    show_teleport_list_by_rootCategory(category);
-                }
-            ImGui::EndChild();
-            ImGui::PopStyleVar();
-
-            ImGui::SameLine();
-
-            ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
-            ImGui::BeginChild("ChildR", ImVec2(0, ImGui::GetContentRegionAvail().y), ImGuiChildFlags_Border);
-
-            // line 0
-            static ImGuiInputTextFlags flags = ImGuiInputTextFlags_EscapeClearsAll;
-            ImGui::InputText("", g_teleport_name, IM_ARRAYSIZE(g_teleport_name), flags);
-            // line 1
-            add_button("Add", [](){}, ImVec2(50, 20));
-            ImGui::SameLine();
-            add_button("Edit", [](){}, ImVec2(50, 20));
-            ImGui::SameLine();
-            add_button("Delete", [](){}, ImVec2(50, 20));
-            ImGui::SameLine();
-            ImGui::Checkbox("Sync", &g_sync);
-            // line 2
-            add_button("Teleport", [](){
-                if (g_select_category) {
-                    g_select_category->Print();
-                    if (g_select_category->point)
-                        strcpy(g_teleport_name, g_select_category->point->ToStringWithoutXYZ().c_str());
-                }
-            }, ImVec2(120, 50));
-            // line 3
-            add_button("Save", [](){}, ImVec2(50, 20));
-
-            ImGui::EndChild();
-            ImGui::PopStyleVar();
-
-            ImGui::EndTabItem();
-        }
-        ImGui::EndTabBar();
-    }
-
-    ImGui::End();
-}
 
 // Main code
 int ui_main()
@@ -302,7 +186,7 @@ int ui_main()
         // 3. Show another simple window.
         if (show_another_window)
         {
-            AnotherWindow(show_another_window, lists);
+            TeleportWindow(show_another_window, lists);
         }
 
         // Rendering
