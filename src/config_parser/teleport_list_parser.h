@@ -7,13 +7,11 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <fstream>
 #include <iomanip>
 #include <functional>
 
 struct Category;
-
-// 铁炉堡                        :
-// 铁炉堡-疯狂服                  :
 
 struct Point {
     Point(std::string n, float fx, float fy, float fz) : name(n), x(fx), y(fy), z(fz) {
@@ -46,6 +44,20 @@ struct Point {
     }
     std::string ToStringWithoutXYZ() {
         return name;
+    }
+    std::vector<std::string> ToTxt() {
+        std::vector<std::string> vec;
+        vec.push_back(name);
+        vec.push_back(std::to_string(x));
+        vec.push_back(std::to_string(y));
+        vec.push_back(std::to_string(z));
+        return vec;
+    }
+    void WriteIntoFile(std::fstream &fs) {
+        fs << name << std::endl;
+        fs << x    << std::endl;
+        fs << y    << std::endl;
+        fs << z    << std::endl;
     }
     void Print() {
         std::cout << std::setw(10) << std::left << std::left << x    << ","
@@ -91,6 +103,7 @@ struct Category : public std::enable_shared_from_this<Category> {
             std::cout << std::endl;
         #endif
     }
+    void WriteIntoFile(std::fstream &fs) { if (point) point->WriteIntoFile(fs); }
     void Traverse(std::function<void(std::shared_ptr<Category>)> action = [](std::shared_ptr<Category> node){ node->Print(); });
 };
 
@@ -99,6 +112,8 @@ public:
     TeleportListParser() {};
     void Init();
     std::vector<std::shared_ptr<Category>> Lists() { return m_root; }
+    void SaveAllToFile();
+    void SaveToFile(std::shared_ptr<Category> category);
 private:
     std::shared_ptr<Category> Parse(const std::string &configFilePath);
     std::vector<std::shared_ptr<Category>> m_root;

@@ -25,25 +25,6 @@ void Category::Traverse(std::function<void(shared_ptr<Category>)> action)
     }
 }
 
-
-
-// void Category::Traverse(std::function<void(shared_ptr<Category>)> action = [](shared_ptr<Category> node){ node->Print(); })
-// {
-//     stack<shared_ptr<Category>> sta;
-//     sta.push(shared_from_this());
-
-//     while (!sta.empty()) {
-//         auto node = sta.top();
-//         sta.pop();
-
-//         action(node);
-
-//         for (auto &[k, v] : node->categories) {
-//             sta.push(v);
-//         }
-//     }
-// }
-
 shared_ptr<Category> TeleportListParser::Parse(const std::string &configFilePath)
 {
     string line;

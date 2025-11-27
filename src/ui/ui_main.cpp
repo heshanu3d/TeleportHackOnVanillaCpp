@@ -14,7 +14,8 @@
 #include <d3d9.h>
 #include <tchar.h>
 
-#include "teleport_list_parser.h"
+#include <string>
+#include <iostream>
 
 using namespace std;
 
@@ -105,10 +106,6 @@ int ui_main()
     bool show_another_window = true;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
-    auto parser = new TeleportListParser();
-    parser->Init();
-    vector<shared_ptr<Category>> lists = parser->Lists();
-
     // Main loop
     bool done = false;
     while (!done)
@@ -186,7 +183,7 @@ int ui_main()
         // 3. Show another simple window.
         if (show_another_window)
         {
-            TeleportWindow(show_another_window, lists);
+            TeleportWindow(show_another_window);
         }
 
         // Rendering

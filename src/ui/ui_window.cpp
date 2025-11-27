@@ -8,6 +8,7 @@
 
 #include "ui.h"
 #include "ui_on_msg.h"
+#include "teleport_list_parser.h"
 
 using namespace std;
 
@@ -15,6 +16,8 @@ string g_select_node_txt;
 char g_teleport_name[256];
 shared_ptr<Category> g_select_category = nullptr;
 bool g_sync = false;
+bool g_reload = false;
+vector<shared_ptr<Category>> g_teleportPointLists;
 
 enum ControlType {
     CTRL_BUTTON,
@@ -93,8 +96,6 @@ void show_teleport_list_by_rootCategory(shared_ptr<Category> category)
     }
 }
 
-void test(){}
-
 vector<pair<ControlType, void*>> rightChildCtrlInitParam = {
     make_pair(CTRL_INPUT_TEXT, new InputTextInitParam("", g_teleport_name, IM_ARRAYSIZE(g_teleport_name), ImGuiInputTextFlags_EscapeClearsAll)),
     make_pair(CTRL_BUTTON, new ButtonInitParam("Add", ButtonAction_Add, ImVec2(50, 20))),
@@ -106,6 +107,7 @@ vector<pair<ControlType, void*>> rightChildCtrlInitParam = {
     make_pair(CTRL_CHECK_BOX, new CheckBoxInitParam("Sync", &g_sync)),
     make_pair(CTRL_BUTTON, new ButtonInitParam("Teleport", ButtonAction_Teleport, ImVec2(120, 50))),
     make_pair(CTRL_BUTTON, new ButtonInitParam("Save", ButtonAction_Save, ImVec2(50, 20))),
+    make_pair(CTRL_BUTTON, new ButtonInitParam("Reload", ButtonAction_Reload, ImVec2(50, 20))),
 };
 
 void CreateCtrlByParams(vector<pair<ControlType, void*>> &initParams)
@@ -132,11 +134,24 @@ void CreateCtrlByParams(vector<pair<ControlType, void*>> &initParams)
     }
 }
 
-void TeleportWindow(bool &show_another_window, vector<shared_ptr<Category>> &lists)
+void TeleportWindow(bool &show)
 {
+    static bool firstRun = true;
     static float f = 0.0f;
+
+    if (firstRun) {
+        firstRun = false;
+        g_reload = true;
+    }
+    if (g_reload) {
+        g_reload = false;
+        auto parser = new TeleportListParser();
+        parser->Init();
+        g_teleportPointLists = parser->Lists();
+    }
+
     // ImGui::SetNextWindowSize(ImVec2(800, 600));
-    ImGui::Begin("Another Window", &show_another_window);
+    ImGui::Begin("Another Window", &show);
 
     // ImGui::SetNextItemOpen(true);
 
@@ -144,7 +159,7 @@ void TeleportWindow(bool &show_another_window, vector<shared_ptr<Category>> &lis
         if (ImGui::BeginTabItem("Teleport")) {
             ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
             ImGui::BeginChild("ChildL", ImVec2(ImGui::GetContentRegionAvail().x * 0.6f, ImGui::GetContentRegionAvail().y), ImGuiChildFlags_Border);
-                for (auto category : lists) {
+                for (auto category : g_teleportPointLists) {
                     show_teleport_list_by_rootCategory(category);
                 }
             ImGui::EndChild();
